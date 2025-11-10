@@ -312,13 +312,12 @@ export default function Dashboard() {
         {recommendations.length > 0 && (
           <div className="notion-card" style={{ padding: '1.5rem' }}>
             <div className="section-title">💡 AI-Powered Recommendations</div>
-            <div style={{ marginTop: '1rem', space: '0.75rem' }}>
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {recommendations.map((rec, idx) => (
                 <div key={idx} style={{ 
                   padding: '0.75rem', 
                   background: 'var(--bg-tertiary)', 
                   borderRadius: '6px',
-                  marginBottom: '0.75rem',
                   fontSize: '13px',
                   color: 'var(--text-secondary)',
                   lineHeight: '1.5'
