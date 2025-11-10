@@ -10,10 +10,16 @@ export default function LoginPage() {
 
 const login = async () => {
   setLoading(true)
+  
+  // Get origin safely (works in both browser and SSR)
+  const origin = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${window.location.origin}/after-login`,
+      emailRedirectTo: `${origin}/after-login`,
     },
   })
   setLoading(false)
