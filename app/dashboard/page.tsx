@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, Legend
+  ResponsiveContainer, CartesianGrid, Legend, BarChart, Bar
 } from 'recharts'
 import { seedDemoData } from './seedData'
 
@@ -18,8 +18,9 @@ export default function Dashboard() {
   const [seeded, setSeeded] = useState(false)
   const [overall, setOverall] = useState<number | null>(null)
   const [perEngine, setPerEngine] = useState<Record<string, number>>({})
-  const [trend, setTrend] = useState<Array<{ day: string; overall: number }>>([])
-  const [keywordRows, setKeywordRows] = useState<Array<{ keyword: string; pct: number }>>([])
+  const [trend, setTrend] = useState<Array<{ date: string; overall: number; ChatGPT: number; Gemini: number; Claude: number; Perplexity: number }>>([])
+  const [keywordRows, setKeywordRows] = useState<Array<{ keyword: string; pct: number; ChatGPT: number; Gemini: number; Claude: number; Perplexity: number }>>([])
+  const [recommendations, setRecommendations] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
 
@@ -37,6 +38,56 @@ export default function Dashboard() {
     
     setSeeded(true)
     await loadData()
+  }
+
+  const generateRecommendations = (
+    keywordData: Array<{ keyword: string; pct: number; ChatGPT: number; Gemini: number; Claude: number; Perplexity: number }>,
+    engineData: Record<string, number>
+  ) => {
+    const recs: string[] = []
+    
+    // Find missing/low engines
+    const engines = Object.entries(engineData).sort((a, b) => a[1] - b[1])
+    const weakEngines = engines.filter(([_, pct]) => pct < 50).map(([name]) => name)
+    
+    if (weakEngines.length > 0) {
+      recs.push(`⚠️ Low visibility on: ${weakEngines.join(', ')}. Consider optimizing content for these AI engines.`)
+    }
+    
+    // Find best performing engine
+    if (engines.length > 0) {
+      const best = engines[engines.length - 1]
+      recs.push(`✅ Strongest performance on ${best[0]} (${best[1]}%). Use similar strategies for other engines.`)
+    }
+    
+    // Find low performing keywords
+    const weakKeywords = keywordData.filter(k => k.pct < 50).slice(0, 3)
+    if (weakKeywords.length > 0) {
+      recs.push(`📉 These keywords need improvement: ${weakKeywords.map(k => k.keyword).join(', ')}`)
+    }
+    
+    // Find keywords missing on specific engines
+    keywordData.forEach(kw => {
+      const missingEngines: string[] = []
+      if (kw.ChatGPT === 0) missingEngines.push('ChatGPT')
+      if (kw.Gemini === 0) missingEngines.push('Gemini')
+      if (kw.Claude === 0) missingEngines.push('Claude')
+      if (kw.Perplexity === 0) missingEngines.push('Perplexity')
+      
+      if (missingEngines.length >= 2) {
+        recs.push(`🎯 "${kw.keyword}" is missing on: ${missingEngines.join(', ')}`)
+      }
+    })
+    
+    // Overall health check
+    const avgVisibility = keywordData.reduce((sum, k) => sum + k.pct, 0) / keywordData.length
+    if (avgVisibility > 70) {
+      recs.push(`🌟 Great job! Your overall visibility is strong at ${avgVisibility.toFixed(0)}%`)
+    } else if (avgVisibility < 40) {
+      recs.push(`🔔 Action needed: Overall visibility is low (${avgVisibility.toFixed(0)}%). Focus on content optimization.`)
+    }
+    
+    setRecommendations(recs.slice(0, 5)) // Limit to 5 recommendations
   }
 
   const loadData = async () => {
@@ -68,11 +119,11 @@ export default function Dashboard() {
       setOverall(0); setPerEngine({}); setTrend([]); setKeywordRows([]); setLoading(false); return
     }
 
-    // overall
+    // Overall
     const overallPct = Math.round((arr.filter(c => c.presence).length / arr.length) * 1000) / 10
     setOverall(overallPct)
 
-    // per engine
+    // Per engine
     const engines: Record<string, { yes: number; tot: number }> = {}
     for (const c of arr) {
       engines[c.engine] ??= { yes: 0, tot: 0 }
@@ -83,33 +134,62 @@ export default function Dashboard() {
     Object.entries(engines).forEach(([e, v]) => { per[e] = Math.round((v.yes / v.tot) * 1000) / 10 })
     setPerEngine(per)
 
-    // daily trend
-    const byDay: Record<string, { yes: number; tot: number }> = {}
+    // Daily trend with all engines
+    const byDay: Record<string, Record<string, { yes: number; tot: number }>> = {}
     for (const c of arr) {
       const key = new Date(c.timestamp).toISOString().slice(0, 10)
-      byDay[key] ??= { yes: 0, tot: 0 }
-      byDay[key].tot += 1
-      if (c.presence) byDay[key].yes += 1
+      byDay[key] ??= {}
+      byDay[key][c.engine] ??= { yes: 0, tot: 0 }
+      byDay[key][c.engine].tot += 1
+      if (c.presence) byDay[key][c.engine].yes += 1
     }
-    const trendRows = Object.keys(byDay).sort().map(day => ({
-      day,
-      overall: Math.round((byDay[day].yes / byDay[day].tot) * 1000) / 10,
-    }))
+    
+    const trendRows = Object.keys(byDay).sort().map(day => {
+      const dayData = byDay[day]
+      const allChecks = Object.values(dayData).reduce((sum, v) => sum + v.tot, 0)
+      const allPresence = Object.values(dayData).reduce((sum, v) => sum + v.yes, 0)
+      
+      return {
+        date: new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        overall: Math.round((allPresence / allChecks) * 1000) / 10,
+        ChatGPT: dayData['ChatGPT'] ? Math.round((dayData['ChatGPT'].yes / dayData['ChatGPT'].tot) * 1000) / 10 : 0,
+        Gemini: dayData['Gemini'] ? Math.round((dayData['Gemini'].yes / dayData['Gemini'].tot) * 1000) / 10 : 0,
+        Claude: dayData['Claude'] ? Math.round((dayData['Claude'].yes / dayData['Claude'].tot) * 1000) / 10 : 0,
+        Perplexity: dayData['Perplexity'] ? Math.round((dayData['Perplexity'].yes / dayData['Perplexity'].tot) * 1000) / 10 : 0,
+      }
+    })
     setTrend(trendRows)
 
-    // keyword breakdown
+    // Keyword breakdown by engine
     const kwMap = new Map(keywords.map(k => [k.id, k.keyword]))
-    const byKw: Record<string, { yes: number; tot: number }> = {}
+    const byKw: Record<string, Record<string, { yes: number; tot: number }>> = {}
     for (const c of arr) {
       const kwName = kwMap.get(c.keyword_id) ?? 'Unknown'
-      byKw[kwName] ??= { yes: 0, tot: 0 }
-      byKw[kwName].tot += 1
-      if (c.presence) byKw[kwName].yes += 1
+      byKw[kwName] ??= {}
+      byKw[kwName][c.engine] ??= { yes: 0, tot: 0 }
+      byKw[kwName][c.engine].tot += 1
+      if (c.presence) byKw[kwName][c.engine].yes += 1
     }
+    
     const kwRows = Object.entries(byKw)
-      .map(([keyword, v]) => ({ keyword, pct: Math.round((v.yes / v.tot) * 1000) / 10 }))
+      .map(([keyword, engines]) => {
+        const allChecks = Object.values(engines).reduce((sum, v) => sum + v.tot, 0)
+        const allPresence = Object.values(engines).reduce((sum, v) => sum + v.yes, 0)
+        
+        return {
+          keyword,
+          pct: Math.round((allPresence / allChecks) * 1000) / 10,
+          ChatGPT: engines['ChatGPT'] ? Math.round((engines['ChatGPT'].yes / engines['ChatGPT'].tot) * 100) : 0,
+          Gemini: engines['Gemini'] ? Math.round((engines['Gemini'].yes / engines['Gemini'].tot) * 100) : 0,
+          Claude: engines['Claude'] ? Math.round((engines['Claude'].yes / engines['Claude'].tot) * 100) : 0,
+          Perplexity: engines['Perplexity'] ? Math.round((engines['Perplexity'].yes / engines['Perplexity'].tot) * 100) : 0,
+        }
+      })
       .sort((a, b) => b.pct - a.pct)
     setKeywordRows(kwRows)
+
+    // Generate recommendations
+    generateRecommendations(kwRows, per)
 
     setLoading(false)
   }
@@ -209,34 +289,56 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="stats-card">
-            <div className="metric-label">Overall Visibility (14d)</div>
+            <div className="metric-label">Overall Visibility</div>
             <div className="metric-value">{overall ?? '—'}%</div>
             <div style={{ marginTop: '0.5rem', fontSize: '12px', color: 'var(--text-tertiary)' }}>
-              Across all engines
+              Last 14 days
             </div>
           </div>
           {Object.entries(perEngine).map(([engine, pct]) => (
             <div key={engine} className="stats-card">
               <div className="metric-label">{engine}</div>
               <div className="metric-value">{pct}%</div>
-              <div style={{ marginTop: '0.5rem', fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                Visibility rate
+              <div style={{ marginTop: '0.5rem', fontSize: '12px', color: pct >= 70 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444' }}>
+                {pct >= 70 ? '🟢 Strong' : pct >= 40 ? '🟡 Moderate' : '🔴 Weak'}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Chart */}
+        {/* Recommendations */}
+        {recommendations.length > 0 && (
+          <div className="notion-card" style={{ padding: '1.5rem' }}>
+            <div className="section-title">💡 AI-Powered Recommendations</div>
+            <div style={{ marginTop: '1rem', space: '0.75rem' }}>
+              {recommendations.map((rec, idx) => (
+                <div key={idx} style={{ 
+                  padding: '0.75rem', 
+                  background: 'var(--bg-tertiary)', 
+                  borderRadius: '6px',
+                  marginBottom: '0.75rem',
+                  fontSize: '13px',
+                  color: 'var(--text-secondary)',
+                  lineHeight: '1.5'
+                }}>
+                  {rec}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Trend Chart - Multi-Engine */}
         <div className="chart-container">
-          <div className="section-title">Trend (Last 14 Days)</div>
-          <div className="w-full" style={{ height: 280, minWidth: 0 }}>
+          <div className="section-title">Visibility Trends (Last 14 Days)</div>
+          <div className="w-full" style={{ height: 320, minWidth: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
                 <XAxis 
-                  dataKey="day" 
+                  dataKey="date" 
                   stroke="rgba(255,255,255,0.4)"
                   style={{ fontSize: '12px' }}
                 />
@@ -244,6 +346,7 @@ export default function Dashboard() {
                   domain={[0, 100]} 
                   stroke="rgba(255,255,255,0.4)"
                   style={{ fontSize: '12px' }}
+                  label={{ value: 'Visibility %', angle: -90, position: 'insideLeft', style: { fill: 'rgba(255,255,255,0.4)' } }}
                 />
                 <Tooltip 
                   contentStyle={{ 
@@ -256,28 +359,60 @@ export default function Dashboard() {
                 <Legend 
                   wrapperStyle={{ fontSize: '12px', paddingTop: '1rem' }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="overall" 
-                  name="Overall %" 
-                  stroke="#2383e2"
-                  strokeWidth={2}
-                  dot={false}
-                />
+                <Line type="monotone" dataKey="overall" name="Overall" stroke="#2383e2" strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="ChatGPT" name="ChatGPT" stroke="#10b981" strokeWidth={2} strokeOpacity={0.2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="Gemini" name="Gemini" stroke="#f59e0b" strokeWidth={2} strokeOpacity={0.2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="Claude" name="Claude" stroke="#8b5cf6" strokeWidth={2} strokeOpacity={0.2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="Perplexity" name="Perplexity" stroke="#ec4899" strokeWidth={2} strokeOpacity={0.2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Keywords Table */}
+        {/* Engine Comparison Bar Chart */}
+        <div className="chart-container">
+          <div className="section-title">Engine Comparison</div>
+          <div className="w-full" style={{ height: 280, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={Object.entries(perEngine).map(([name, value]) => ({ name, value }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="rgba(255,255,255,0.4)"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  domain={[0, 100]}
+                  stroke="rgba(255,255,255,0.4)"
+                  style={{ fontSize: '12px' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    background: 'var(--bg-tertiary)', 
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    fontSize: '12px'
+                  }}
+                />
+                <Bar dataKey="value" fill="#2383e2" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Keywords Table with Engine Breakdown */}
         <div className="notion-card" style={{ padding: '1.5rem' }}>
-          <div className="section-title">Keywords Performance</div>
+          <div className="section-title">Keywords Performance by Engine</div>
           <div className="overflow-x-auto" style={{ marginTop: '1rem' }}>
             <table className="notion-table">
               <thead>
                 <tr>
                   <th>Keyword</th>
-                  <th>Visibility %</th>
+                  <th>Overall</th>
+                  <th>ChatGPT</th>
+                  <th>Gemini</th>
+                  <th>Claude</th>
+                  <th>Perplexity</th>
                 </tr>
               </thead>
               <tbody>
@@ -304,11 +439,15 @@ export default function Dashboard() {
                           <span>{r.pct}%</span>
                         </div>
                       </td>
+                      <td><span style={{ color: r.ChatGPT >= 70 ? '#10b981' : r.ChatGPT >= 40 ? '#f59e0b' : '#ef4444' }}>{r.ChatGPT}%</span></td>
+                      <td><span style={{ color: r.Gemini >= 70 ? '#10b981' : r.Gemini >= 40 ? '#f59e0b' : '#ef4444' }}>{r.Gemini}%</span></td>
+                      <td><span style={{ color: r.Claude >= 70 ? '#10b981' : r.Claude >= 40 ? '#f59e0b' : '#ef4444' }}>{r.Claude}%</span></td>
+                      <td><span style={{ color: r.Perplexity >= 70 ? '#10b981' : r.Perplexity >= 40 ? '#f59e0b' : '#ef4444' }}>{r.Perplexity}%</span></td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={2} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-tertiary)' }}>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-tertiary)' }}>
                       No data available. Click "Seed Demo Data" to get started.
                     </td>
                   </tr>
@@ -327,7 +466,7 @@ export default function Dashboard() {
           fontSize: '13px',
           color: 'var(--text-tertiary)'
         }}>
-          💡 <span style={{ color: 'var(--text-secondary)' }}>Tip:</span> You can reseed to regenerate demo data and refresh to see the latest statistics.
+          💡 <span style={{ color: 'var(--text-secondary)' }}>Tip:</span> Click "Seed Demo Data" to generate 14 days of sample data. Use "Refresh" to reload after changes.
         </div>
       </div>
     </div>
