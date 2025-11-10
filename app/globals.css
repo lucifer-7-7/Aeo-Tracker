@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #37352f;
+  --surface: #ffffff;
+  --border: rgba(55, 53, 47, 0.16);
+  --metallic: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  --metallic-accent: rgba(255, 255, 255, 0.8);
+  --shadow: rgba(15, 15, 15, 0.03);
+  --shadow-hover: rgba(15, 15, 15, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+body {
+  background: #f7f6f3;
+  color: var(--foreground);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Notion-style card */
+.notion-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px var(--shadow);
+  transition: all 0.2s ease;
+}
+
+.notion-card:hover {
+  box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+/* Metallic surface */
+.metallic-surface {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid rgba(55, 53, 47, 0.09);
+  box-shadow: 
+    0 1px 3px rgba(15, 15, 15, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Metallic button */
+.metallic-button {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+  border: 1px solid rgba(55, 53, 47, 0.16);
+  color: #37352f;
+  transition: all 0.2s ease;
+}
+
+.metallic-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  box-shadow: 0 2px 6px rgba(15, 15, 15, 0.08);
+  transform: translateY(-1px);
+}
+
+.metallic-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(15, 15, 15, 0.05);
+}
+
+/* Primary button with metallic accent */
+.primary-button {
+  background: linear-gradient(135deg, #37352f 0%, #2e2d27 100%);
+  color: #ffffff;
+  border: 1px solid #2e2d27;
+  transition: all 0.2s ease;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2e2d27 0%, #37352f 100%);
+  box-shadow: 0 4px 12px rgba(55, 53, 47, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Input styling */
+.notion-input {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.notion-input:focus {
+  border-color: #37352f;
+  box-shadow: 0 0 0 3px rgba(55, 53, 47, 0.08);
+  outline: none;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
