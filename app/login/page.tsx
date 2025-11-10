@@ -22,24 +22,98 @@ const login = async () => {
 }
 
   return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="p-6 bg-gray-900 rounded-2xl w-80 space-y-3">
-        <div className="text-lg font-semibold text-center">AEO Tracker</div>
+    <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
+      <div className="w-full max-w-md px-6">
+        {/* Logo and Title */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: 'linear-gradient(135deg, #2383e2 0%, #1a6dc4 100%)', boxShadow: 'var(--shadow-lg)' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 3v18h18" />
+              <path d="m19 9-5 5-4-4-3 3" />
+            </svg>
+          </div>
+          <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+            AEO Tracker
+          </h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>
+            Track your visibility across AI search engines
+          </p>
+        </div>
 
-        <input
-          className="w-full p-2 rounded bg-gray-800 outline-none"
-          placeholder="email@site.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        {/* Login Card */}
+        <div className="notion-card" style={{ padding: '2rem' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              Sign in to continue
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
+              We'll send you a magic link to your email
+            </p>
+          </div>
 
-        <button
-          onClick={login}
-          disabled={!email || loading}
-          className="w-full p-2 rounded bg-blue-600 disabled:opacity-60"
-        >
-          {loading ? 'Sending...' : 'Send Magic Link'}
-        </button>
+          <div className="space-y-4">
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
+                Email address
+              </label>
+              <input
+                className="notion-input w-full"
+                placeholder="name@company.com"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && email && !loading) {
+                    login()
+                  }
+                }}
+              />
+            </div>
+
+            <button
+              onClick={login}
+              disabled={!email || loading}
+              className="btn-primary w-full"
+              style={{ padding: '0.625rem 1rem' }}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-pulse">●</span>
+                  Sending...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                  Send Magic Link
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Info */}
+          <div style={{ 
+            marginTop: '1.5rem', 
+            padding: '1rem', 
+            background: 'var(--bg-tertiary)', 
+            borderRadius: '6px',
+            fontSize: '12px',
+            color: 'var(--text-tertiary)',
+            lineHeight: 1.6
+          }}>
+            <div style={{ marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+              💡 <strong>Magic Link Login</strong>
+            </div>
+            Click the link in your email to sign in securely without a password.
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-8" style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
+          Secure authentication powered by Supabase
+        </div>
       </div>
     </div>
   )
