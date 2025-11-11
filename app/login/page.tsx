@@ -6,9 +6,27 @@ import { useRouter } from 'next/navigation'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const [emailError, setEmailError] = useState('')
   const router = useRouter()
 
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
 const login = async () => {
+  // Validate email format
+  if (!email.trim()) {
+    setEmailError('Email is required')
+    return
+  }
+  
+  if (!validateEmail(email)) {
+    setEmailError('Please enter a valid email address')
+    return
+  }
+  
+  setEmailError('')
   setLoading(true)
   
   // Get origin safely (works in both browser and SSR)
@@ -61,13 +79,33 @@ const login = async () => {
                 placeholder="name@company.com"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (emailError) setEmailError('')
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && email && !loading) {
                     login()
                   }
                 }}
+                style={{
+                  borderColor: emailError ? '#ff0055' : undefined
+                }}
               />
+              {emailError && (
+                <div style={{ 
+                  marginTop: '0.5rem', 
+                  fontSize: '12px', 
+                  color: '#ff0055',
+                  fontFamily: 'monospace',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.375rem'
+                }}>
+                  <span>⚠</span>
+                  {emailError}
+                </div>
+              )}
             </div>
 
             <button

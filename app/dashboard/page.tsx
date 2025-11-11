@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [showAddProject, setShowAddProject] = useState(false)
   const [newDomain, setNewDomain] = useState('')
   const [newBrand, setNewBrand] = useState('')
+  const [domainError, setDomainError] = useState('')
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [newKeyword, setNewKeyword] = useState('')
   const [manageSectionOpen, setManageSectionOpen] = useState(true)
@@ -306,11 +307,28 @@ export default function Dashboard() {
     setLoading(false)
   };
 
+  const validateDomain = (domain: string): boolean => {
+    // Remove protocol if present
+    const cleanDomain = domain.replace(/^(https?:\/\/)?(www\.)?/, '')
+    // Basic domain regex: should have at least one dot and valid characters
+    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/
+    return domainRegex.test(cleanDomain)
+  }
+
   const addProject = async () => {
     if (!newDomain.trim() || !newBrand.trim()) {
-      setError('Domain and brand are required');
+      setError('Both domain and brand name are required');
       return;
     }
+
+    // Validate domain format
+    const cleanDomain = newDomain.trim().replace(/^(https?:\/\/)?(www\.)?/, '')
+    if (!validateDomain(cleanDomain)) {
+      setDomainError('Please enter a valid domain (e.g., example.com)')
+      return
+    }
+    
+    setDomainError('')
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -322,7 +340,7 @@ export default function Dashboard() {
     const { data, error: insertErr } = await supabase
       .from('projects')
       .insert({ 
-        domain: newDomain.trim(), 
+        domain: cleanDomain, 
         brand: newBrand.trim(),
         user_id: user.id 
       })
@@ -603,20 +621,40 @@ export default function Dashboard() {
                       Add New Website
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <input
-                        type="text"
-                        placeholder="Domain (e.g., example.com)"
-                        value={newDomain}
-                        onChange={(e) => setNewDomain(e.target.value)}
-                        style={{
-                          padding: '0.625rem',
-                          background: 'var(--bg-secondary)',
-                          border: '1px solid var(--border)',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          color: 'var(--text-primary)'
-                        }}
-                      />
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Domain (e.g., example.com)"
+                          value={newDomain}
+                          onChange={(e) => {
+                            setNewDomain(e.target.value)
+                            if (domainError) setDomainError('')
+                          }}
+                          style={{
+                            padding: '0.625rem',
+                            background: 'var(--bg-secondary)',
+                            border: `2px solid ${domainError ? '#ff0055' : 'var(--border)'}`,
+                            borderRadius: '2px',
+                            fontSize: '14px',
+                            color: 'var(--text-primary)',
+                            width: '100%'
+                          }}
+                        />
+                        {domainError && (
+                          <div style={{ 
+                            marginTop: '0.5rem', 
+                            fontSize: '11px', 
+                            color: '#ff0055',
+                            fontFamily: 'monospace',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.375rem'
+                          }}>
+                            <span>⚠</span>
+                            {domainError}
+                          </div>
+                        )}
+                      </div>
                       <input
                         type="text"
                         placeholder="Brand Name (e.g., My Brand)"
@@ -636,7 +674,12 @@ export default function Dashboard() {
                           Add Website
                         </button>
                         <button 
-                          onClick={() => { setShowAddProject(false); setNewDomain(''); setNewBrand(''); }}
+                          onClick={() => { 
+                            setShowAddProject(false); 
+                            setNewDomain(''); 
+                            setNewBrand(''); 
+                            setDomainError('');
+                          }}
                           className="btn-secondary"
                           style={{ fontSize: '13px' }}
                         >
