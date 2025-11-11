@@ -18,19 +18,14 @@ export default function AfterLogin() {
   }, [router])
 
   return (
-    <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
+    <div className="h-screen flex items-center justify-center" style={{ background: 'radial-gradient(circle at top right, rgba(0, 217, 255, 0.15) 0%, rgba(0, 217, 255, 0.05) 25%, transparent 50%), var(--bg-primary)' }}>
       <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: 'linear-gradient(135deg, #2383e2 0%, #1a6dc4 100%)', boxShadow: 'var(--shadow-lg)' }}>
-          <svg className="animate-pulse" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 3v18h18" />
-            <path d="m19 9-5 5-4-4-3 3" />
-          </svg>
-        </div>
-        <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-          Setting things up...
+        <div className="neon-loader" style={{ margin: '0 auto 1.5rem' }}></div>
+        <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#00D9FF', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '2px', fontFamily: 'monospace' }}>
+          SETTING THINGS UP...
         </h2>
-        <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>
-          You'll be redirected to the dashboard in a moment
+        <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', fontFamily: 'monospace' }}>
+          Redirecting to dashboard
         </p>
       </div>
     </div>

@@ -28,18 +28,12 @@ const login = async () => {
 }
 
   return (
-    <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
+    <div className="h-screen flex items-center justify-center" style={{ background: 'radial-gradient(circle at top right, rgba(0, 217, 255, 0.15) 0%, rgba(0, 217, 255, 0.05) 25%, transparent 50%), var(--bg-primary)' }}>
       <div className="w-full max-w-md px-6">
         {/* Logo and Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: 'linear-gradient(135deg, #2383e2 0%, #1a6dc4 100%)', boxShadow: 'var(--shadow-lg)' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 3v18h18" />
-              <path d="m19 9-5 5-4-4-3 3" />
-            </svg>
-          </div>
-          <h1 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            AEO Tracker
+          <h1 style={{ fontSize: '32px', fontWeight: 800, color: '#00D9FF', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+            AEO TRACKER
           </h1>
           <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>
             Track your visibility across AI search engines
@@ -104,7 +98,7 @@ const login = async () => {
             marginTop: '1.5rem', 
             padding: '1rem', 
             background: 'var(--bg-tertiary)', 
-            borderRadius: '6px',
+            borderRadius: '2px',
             fontSize: '12px',
             color: 'var(--text-tertiary)',
             lineHeight: 1.6

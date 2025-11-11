@@ -21,6 +21,107 @@ export const DEMO_SEED_CONFIG = {
 }
 
 /**
+ * Generate tracking data for existing keywords
+ * Does NOT delete or replace your data
+ */
+export async function seedExistingKeywords(specificProjectId?: string) {
+  try {
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { error: new Error('User not authenticated') }
+    }
+
+    // Determine which projects to use
+    let projectIds: string[] = []
+    if (specificProjectId) {
+      projectIds = [specificProjectId]
+    } else {
+      // Get all user's projects
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('user_id', user.id)
+
+      if (projectsError) {
+        return { error: projectsError }
+      }
+
+      if (!projects || projects.length === 0) {
+        return { error: new Error('No projects found. Please add a website first.') }
+      }
+      
+      projectIds = projects.map(p => p.id)
+    }
+
+    // Get all keywords for these projects
+    const { data: keywords, error: keywordsError } = await supabase
+      .from('keywords')
+      .select('id')
+      .in('project_id', projectIds)
+
+    if (keywordsError) {
+      return { error: keywordsError }
+    }
+
+    if (!keywords || keywords.length === 0) {
+      return { error: new Error('No keywords found. Please add keywords first.') }
+    }
+
+    // Generate check data for the last 14 days
+    const engines = ['ChatGPT', 'Gemini', 'Claude', 'Perplexity']
+    const checksToInsert = []
+    const now = new Date()
+
+    for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+      const checkDate = new Date(now)
+      checkDate.setDate(checkDate.getDate() - dayOffset)
+
+      for (const keyword of keywords) {
+        for (const engine of engines) {
+          // Random presence (60-90% chance of being present)
+          const presence = Math.random() > 0.25
+          
+          checksToInsert.push({
+            keyword_id: keyword.id,
+            engine,
+            presence,
+            timestamp: checkDate.toISOString()
+          })
+        }
+      }
+    }
+
+    // Delete existing checks first
+    for (const keyword of keywords) {
+      await supabase
+        .from('checks')
+        .delete()
+        .eq('keyword_id', keyword.id)
+    }
+
+    // Insert new checks in batches (Supabase has limits)
+    const batchSize = 500
+    for (let i = 0; i < checksToInsert.length; i += batchSize) {
+      const batch = checksToInsert.slice(i, i + batchSize)
+      const { error: insertError } = await supabase
+        .from('checks')
+        .insert(batch)
+
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        return { error: insertError }
+      }
+    }
+
+    return { error: null }
+  } catch (err) {
+    console.error('Seed error:', err)
+    return { error: err instanceof Error ? err : new Error('Unknown error') }
+  }
+}
+
+/**
  * Seeds demo data using Supabase RPC function
  * Handles the ensure_profile requirement from client side first
  * 
