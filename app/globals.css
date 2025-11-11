@@ -18,6 +18,23 @@
   --shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.7);
 }
 
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f8;
+  --bg-tertiary: #f1f2f4;
+  --bg-hover: #e9eaee;
+  --border: rgba(0, 0, 0, 0.12);
+  --border-hover: rgba(0, 0, 0, 0.2);
+  --text-primary: #0a0a0a;
+  --text-secondary: rgba(0, 0, 0, 0.78);
+  --text-tertiary: rgba(0, 0, 0, 0.6);
+  --accent-primary: #2563eb;
+  --accent-hover: #1d4ed8;
+  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.16);
+}
+
 @theme inline {
   --color-background: var(--bg-primary);
   --color-foreground: var(--text-primary);
@@ -189,6 +206,15 @@ body {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
+html[data-theme="light"] .page-header {
+  text-shadow: none;
+}
+
+/* Light mode: ensure all common text elements have no text shadow */
+html[data-theme="light"] :is(h1, h2, h3, h4, h5, h6, p, span, strong, em, small, label) {
+  text-shadow: none !important;
+}
+
 .section-title {
   font-size: 12px;
   font-weight: 700;
@@ -205,6 +231,10 @@ body {
   color: var(--text-primary);
   line-height: 1.2;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="light"] .metric-value {
+  text-shadow: none;
 }
 
 .metric-label {

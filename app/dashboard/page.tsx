@@ -23,6 +23,25 @@ export default function Dashboard() {
   const [recommendations, setRecommendations] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+
+  // Track theme from the html[data-theme] attribute so charts can adapt
+  useEffect(() => {
+    const apply = () => {
+      const t = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+      setTheme(t)
+    }
+    apply()
+    const obs = new MutationObserver((muts) => {
+      for (const m of muts) {
+        if (m.type === 'attributes' && m.attributeName === 'data-theme') {
+          apply()
+        }
+      }
+    })
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
 
   const seed = async () => {
     setLoading(true)
@@ -335,17 +354,17 @@ export default function Dashboard() {
           <div className="w-full" style={{ height: 320, minWidth: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'} />
                 <XAxis 
                   dataKey="date" 
-                  stroke="rgba(255,255,255,0.4)"
-                  style={{ fontSize: '12px' }}
+                  stroke={theme === 'light' ? '#111111' : 'rgba(255,255,255,0.4)'}
+                  style={{ fontSize: '12px', fill: theme === 'light' ? '#111111' : undefined }}
                 />
                 <YAxis 
                   domain={[0, 100]} 
-                  stroke="rgba(255,255,255,0.4)"
-                  style={{ fontSize: '12px' }}
-                  label={{ value: 'Visibility %', angle: -90, position: 'insideLeft', style: { fill: 'rgba(255,255,255,0.4)' } }}
+                  stroke={theme === 'light' ? '#111111' : 'rgba(255,255,255,0.4)'}
+                  style={{ fontSize: '12px', fill: theme === 'light' ? '#111111' : undefined }}
+                  label={{ value: 'Visibility %', angle: -90, position: 'insideLeft', style: { fill: theme === 'light' ? '#111111' : 'rgba(255,255,255,0.4)' } }}
                 />
                 <Tooltip 
                   contentStyle={{ 
@@ -358,11 +377,11 @@ export default function Dashboard() {
                 <Legend 
                   wrapperStyle={{ fontSize: '12px', paddingTop: '1rem' }}
                 />
-                <Line type="monotone" dataKey="overall" name="Overall" stroke="#2383e2" strokeWidth={3} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="ChatGPT" name="ChatGPT" stroke="#10b981" strokeWidth={2} strokeOpacity={0.2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="Gemini" name="Gemini" stroke="#f59e0b" strokeWidth={2} strokeOpacity={0.2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="Claude" name="Claude" stroke="#8b5cf6" strokeWidth={2} strokeOpacity={0.2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="Perplexity" name="Perplexity" stroke="#ec4899" strokeWidth={2} strokeOpacity={0.2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="overall" name="Overall" stroke="#2383e2" strokeWidth={3} dot={theme === 'light' ? { r: 4, fill: '#2383e2', stroke: '#111', strokeWidth: 1 } : { r: 4 }} />
+                <Line type="monotone" dataKey="ChatGPT" name="ChatGPT" stroke="#10b981" strokeWidth={2} strokeOpacity={0.2} dot={theme === 'light' ? { r: 3, fill: '#10b981', stroke: '#111', strokeWidth: 1 } : { r: 3 }} />
+                <Line type="monotone" dataKey="Gemini" name="Gemini" stroke="#f59e0b" strokeWidth={2} strokeOpacity={0.2} dot={theme === 'light' ? { r: 3, fill: '#f59e0b', stroke: '#111', strokeWidth: 1 } : { r: 3 }} />
+                <Line type="monotone" dataKey="Claude" name="Claude" stroke="#8b5cf6" strokeWidth={2} strokeOpacity={0.2} dot={theme === 'light' ? { r: 3, fill: '#8b5cf6', stroke: '#111', strokeWidth: 1 } : { r: 3 }} />
+                <Line type="monotone" dataKey="Perplexity" name="Perplexity" stroke="#ec4899" strokeWidth={2} strokeOpacity={0.2} dot={theme === 'light' ? { r: 3, fill: '#ec4899', stroke: '#111', strokeWidth: 1 } : { r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -374,16 +393,16 @@ export default function Dashboard() {
           <div className="w-full" style={{ height: 280, minWidth: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={Object.entries(perEngine).map(([name, value]) => ({ name, value }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'} />
                 <XAxis 
                   dataKey="name" 
-                  stroke="rgba(255,255,255,0.4)"
-                  style={{ fontSize: '12px' }}
+                  stroke={theme === 'light' ? '#111111' : 'rgba(255,255,255,0.4)'}
+                  style={{ fontSize: '12px', fill: theme === 'light' ? '#111111' : undefined }}
                 />
                 <YAxis 
                   domain={[0, 100]}
-                  stroke="rgba(255,255,255,0.4)"
-                  style={{ fontSize: '12px' }}
+                  stroke={theme === 'light' ? '#111111' : 'rgba(255,255,255,0.4)'}
+                  style={{ fontSize: '12px', fill: theme === 'light' ? '#111111' : undefined }}
                 />
                 <Tooltip 
                   contentStyle={{ 
