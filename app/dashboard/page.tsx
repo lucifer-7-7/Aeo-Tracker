@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import ThemeToggle from '@/components/ThemeToggle'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend, BarChart, Bar
@@ -260,13 +261,16 @@ export default function Dashboard() {
             </div>
             <h1 className="page-header" style={{ fontSize: '20px', fontWeight: 600 }}>AEO Tracker</h1>
           </div>
-          <a 
-            href="/logout" 
-            className="btn-secondary" 
-            style={{ fontSize: '13px', padding: '0.375rem 0.75rem' }}
-          >
-            Logout
-          </a>
+          <div className="flex items-center gap-3">
+            <ThemeToggle fixed={false} />
+            <a 
+              href="/logout" 
+              className="btn-secondary" 
+              style={{ fontSize: '13px', padding: '0.375rem 0.75rem' }}
+            >
+              Logout
+            </a>
+          </div>
         </div>
       </div>
 

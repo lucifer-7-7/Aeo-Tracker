@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ThemeToggle from '@/components/ThemeToggle'
 
 export default function Home() {
   return (
@@ -15,9 +16,12 @@ export default function Home() {
             </div>
             <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>AEO Tracker</span>
           </div>
-          <Link href="/login" className="btn-primary" style={{ fontSize: '13px', padding: '0.375rem 0.75rem' }}>
-            Sign In
-          </Link>
+          <div className="flex items-center gap-3">
+            <ThemeToggle fixed={false} />
+            <Link href="/login" className="btn-primary" style={{ fontSize: '13px', padding: '0.375rem 0.75rem' }}>
+              Sign In
+            </Link>
+          </div>
         </div>
       </div>
 
